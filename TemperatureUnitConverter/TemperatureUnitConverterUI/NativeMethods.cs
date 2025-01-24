@@ -10,7 +10,13 @@ namespace TemperatureUnitConverterUI
     public static class NativeMethods
     {
         [DllImport("TemperatureUnitConverter.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr ConvertToCelsius(out int returnSize);
+        public static extern IntPtr convertToCelsius();
+
+        [DllImport("TemperatureUnitConverter.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr convertToKelvin();
+
+        [DllImport("TemperatureUnitConverter.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr retrieveFahrenheit(out int returnSize);
 
         [DllImport("TemperatureUnitConverter.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int freeMemory(IntPtr ptr);

@@ -7,40 +7,76 @@ namespace TemperatureUnitConverterUI
         public MainForm()
         {
             InitializeComponent();
+            Load += formLoad;
+            this.FormClosing += ExitApplication;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void formLoad(object sender, EventArgs e)
         {
-            try 
+            populateListBox();
+        }
+        private void ExitApplication(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                Application.Exit();
+            }
+        }
+
+        private void populateListBox()
+        {
+            try
             {
                 int size = 0;
 
-                MessageBox.Show($"Size before convert: {size}");
+                IntPtr fahrenheit = NativeMethods.retrieveFahrenheit(out size);
+                IntPtr celsius = NativeMethods.convertToCelsius();
+                IntPtr kelvin = NativeMethods.convertToKelvin();
+                
 
-                IntPtr result = NativeMethods.ConvertToCelsius(out size);
-
-                MessageBox.Show($"Size after convert: {size}");
-
-                if (result == IntPtr.Zero)
+                if (fahrenheit ==  IntPtr.Zero)
                 {
-                    MessageBox.Show("result returned null pointer");
+                    MessageBox.Show("fahrenheit returned null pointer");
+                }
+                if (celsius == IntPtr.Zero)
+                {
+                    MessageBox.Show("celsius returned null pointer");
+                }
+
+                if (kelvin == IntPtr.Zero)
+                {
+                    MessageBox.Show("kelvin returned null pointer");
                 }
 
                 if (size > 0)
                 {
-                    int[] managedArray = new int[size];
+                    double[] fahrenheitArray = new double[size];
+                    double[] celsiusArray = new double[size];
+                    double[] kelvinArray = new double[size];
 
-                    Marshal.Copy(result, managedArray, 0, size);
-
-                    string message = "Result from C DLL: ";
-                    foreach (var value in managedArray)
+                    for (int i = 0; i < size; i++)
                     {
-                        message += value + " ";
+                        fahrenheitArray[i] = Marshal.PtrToStructure<double>(fahrenheit + i * sizeof(double));
+                        celsiusArray[i] = Marshal.PtrToStructure<double>(celsius + i * sizeof(double));
+                        kelvinArray[i] = Marshal.PtrToStructure<double>(kelvin + i * sizeof(double));
                     }
 
-                    MessageBox.Show(message);
+                    foreach (var value in fahrenheitArray)
+                    {
+                        fahrenheitListBox.Items.Add($"{value:F2}");
+                    }
 
-                    if (NativeMethods.freeMemory(result) != 0)
+                    foreach (var value in celsiusArray)
+                    {
+                        celsiusListBox.Items.Add($"{value:F2}");
+                    }
+
+                    foreach (var value in kelvinArray)
+                    {
+                        kelvinListBox.Items.Add($"{value:F2}");
+                    }
+
+                    if (NativeMethods.freeMemory(fahrenheit) != 0 || NativeMethods.freeMemory(celsius) != 0 || NativeMethods.freeMemory(kelvin) != 0)
                     {
                         MessageBox.Show("Error freeing memory!");
                     }
@@ -53,7 +89,7 @@ namespace TemperatureUnitConverterUI
                 {
                     MessageBox.Show("No data to copy!");
 
-                    if (NativeMethods.freeMemory(result) != 0)
+                    if (NativeMethods.freeMemory(fahrenheit) != 0 || NativeMethods.freeMemory(celsius) != 0 || NativeMethods.freeMemory(kelvin) != 0)
                     {
                         MessageBox.Show("Error freeing memory!");
                     }
@@ -62,13 +98,18 @@ namespace TemperatureUnitConverterUI
                         MessageBox.Show("Memory freed successfully!");
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred: {ex.Message}");
 
             }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
